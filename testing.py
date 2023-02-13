@@ -77,13 +77,18 @@ def read_from_video(video_path):
             image = frame
 
             output, image_ = inference_on_image(image)
+            image_drawn = image_
 
-            output = get_maximum_area_detection(output)
-            detection_boxes = get_detection_box_yolo(output)
+            if output.shape[0] != 0:
 
-            detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
-            image_drawn = visualize_box_detection(detection_boxes, output, image_)
+                output = get_maximum_area_detection(output)
+                detection_boxes = get_detection_box_yolo(output)
+                detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
+                
+                image_drawn = visualize_box_detection(detection_boxes, output, image_)
+
             capWriter.write(image_drawn)
+
         else:
             break
 
@@ -102,14 +107,16 @@ def capture_from_camera():
         ret, frame = vid.read()
 
         image = frame
-
         output, image_ = inference_on_image(image)
+        image_drawn = image_
 
+        if output.shape[0] != 0:
 
-        detection_boxes = get_detection_box_yolo(output)
-
-        detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
-        image_drawn = visualize_box_detection(detection_boxes, output, image_)
+            detection_boxes = get_detection_box_yolo(output)
+            detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
+            detection_normalized = normalize_detection_limbs(detection_boxes, detection_limbs_human_format)
+            print(detection_normalized)
+            image_drawn = visualize_box_detection(detection_boxes, output, image_)
 
         # Display the resulting frame
         cv2.imshow('frame', image_drawn)
@@ -128,19 +135,23 @@ def capture_from_camera():
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = initialize_model(device)
+#model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+#params = sum([np.prod(p.size()) for p in model_parameters])
+#print(params)
 #read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand2hands\\p4_backhand2h_s1.avi")
-capture_from_camera()
-#image = cv2.imread('C:\Licenta\Lucrare-licenta\yolov7\inference\images\zidane.jpg')
+#capture_from_camera()
+image = cv2.imread('C:\Licenta\Lucrare-licenta\yolov7\inference\images\zidane.jpg')
+
+output, image_ = inference_on_image(image)
+
+output = get_maximum_area_detection(output)
+detection_boxes = get_detection_box_yolo(output)
 #
-#output, image_ = inference_on_image(image)
-#
-#output = get_maximum_area_detection(output)
-#detection_boxes = get_detection_box_yolo(output)
-#
-#detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
-#print(detection_limbs_human_format)
-#image_drawn = visualize_box_detection(detection_boxes, output, image_)
-#cv2.imshow("LALA", image_drawn)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
+detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
+detection_normalized = normalize_detection_limbs(detection_boxes, detection_limbs_human_format)
+print(detection_normalized)
+image_drawn = visualize_box_detection(detection_boxes, output, image_)
+cv2.imshow("LALA", image_drawn)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 

@@ -1,3 +1,4 @@
+from tkinter import Y
 from turtle import width
 from general import xywh2xyxy
 import numpy as np
@@ -39,6 +40,15 @@ def get_limbs_postion(detection):
 
     detection_limbs_human_format = detection_limbs.reshape(confidence_for_limb.shape[0], confidence_for_limb.shape[1], 2)
 
+    confidence_for_limb = confidence_for_limb < 0.5
+    
+    for idx in range(confidence_for_limb.shape[0]):
+        for jdx in range(confidence_for_limb.shape[1]):
+            if confidence_for_limb[idx,jdx] == True:
+                detection_limbs_human_format[idx,jdx,0] = 0
+                detection_limbs_human_format[idx,jdx,1] = 0
+
+
     return detection_limbs, confidence_for_limb, detection_limbs_human_format
 
 def get_maximum_area_detection(detection):
@@ -57,3 +67,22 @@ def get_maximum_area_detection(detection):
     final_detection = detection[index_location]
 
     return final_detection
+
+def normalize_detection_limbs(yolo_boxes, detection_limbs):
+    
+    detection_for_limbs = detection_limbs.copy()
+
+    for idx in range(yolo_boxes.shape[0]):
+        x_std_normalization = yolo_boxes[idx, 2] - yolo_boxes[idx, 0]
+        y_std_normalization = yolo_boxes[idx, 3] - yolo_boxes[idx, 1]
+
+        detection_for_limbs[idx, :, 0] = (detection_for_limbs[idx, :, 0] - yolo_boxes[idx, 0]) / x_std_normalization
+        detection_for_limbs[idx, :, 1] = (detection_for_limbs[idx, :, 1] - yolo_boxes[idx, 1]) / y_std_normalization
+
+    for idx in range(detection_for_limbs.shape[0]):
+        for jdx in range(detection_for_limbs.shape[1]):
+            if detection_for_limbs[idx,jdx,0] < 0 or detection_for_limbs[idx,jdx,1] < 0:
+                detection_for_limbs[idx,jdx,0] = 0
+                detection_for_limbs[idx,jdx,1] = 0
+
+    return detection_for_limbs

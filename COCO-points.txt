@@ -1,0 +1,17 @@
+Nose - 0
+Left Eye - 1
+Right Eye - 2
+Left Ear - 3
+Right Ear - 4
+Left Shoulder - 5
+Right Shoulder - 6
+Left Arm - 7
+Right Arm - 8
+Left Hand - 9
+Right Hand - 10
+Left Hip - 11
+Right Hip - 12
+Left Knee - 13
+Right Knee - 14
+Left foot - 15
+Right foot - 16

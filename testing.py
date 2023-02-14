@@ -11,11 +11,20 @@ import pandas as pd
 model = YM.YoloModel()
 model.training_mode = True
 #model.capture_from_camera()
-all_detection, yolo_boxes = model.read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand2hands\\p4_backhand2h_s1.avi")
+all_detection, yolo_boxes = model.read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand\\p29_backhand_s1.avi")
 all_dec_mat = convert_to_2D_matrix(all_detection)
 save_to_csv_limbs("nume.csv", all_detection)
 all_detection_loaded = load_from_csv_limbs("nume.csv")
-print(all_detection_loaded == all_dec_mat)
+
+save_to_csv_YOLO("yolo_boxes.csv", yolo_boxes)
+yolo_b = load_from_csv_YOLO("yolo_boxes.csv")
+
+all_detections_made_algo = load_from_csv_limbs("C:\Licenta\Dataset\\backhand\p29_backhand_s1_limbs.csv")
+yolo_ba = load_from_csv_YOLO("C:\Licenta\Dataset\\backhand\p29_backhand_s1_yolo.csv")
+
+print(all_detections_made_algo == all_dec_mat)
+print(yolo_boxes == yolo_ba)
+
 
 ##model_parameters = filter(lambda p: p.requires_grad, model.parameters())
 ##params = sum([np.prod(p.size()) for p in model_parameters])

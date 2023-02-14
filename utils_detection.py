@@ -76,6 +76,14 @@ def load_from_csv_limbs(csv_name):
     df_numpy = pd.read_csv(csv_name).to_numpy()[:, 1:]
     return df_numpy
 
+def save_to_csv_YOLO(csv_name, yolo_boxes):
+    df = pd.DataFrame(yolo_boxes)
+    df.to_csv(csv_name)
+
+def load_from_csv_YOLO(yolo_boxes):
+    df_numpy = pd.read_csv(yolo_boxes).to_numpy()[:, 1:]
+    return df_numpy
+
 def convert_to_2D_matrix(detection_limbs_human_format):
     all_detections_2D_matrix = detection_limbs_human_format.reshape(detection_limbs_human_format.shape[0], detection_limbs_human_format.shape[1] * detection_limbs_human_format.shape[2])
     return all_detections_2D_matrix
@@ -86,7 +94,7 @@ def convert_to_csv_format_normalized(detection_limbs_human_format, yolo_boxes):
     return all_detections
 
 def normalize_detection_limbs(yolo_boxes, detection_limbs):
-    
+    #normalizez by the same yolo_box corresponding to the detection
     detection_for_limbs = detection_limbs.copy()
 
     for idx in range(yolo_boxes.shape[0]):

@@ -1,9 +1,7 @@
-from tkinter import Y
-from turtle import width
 from general import xywh2xyxy
 import numpy as np
 import sys
-
+import pandas as pd
 def get_detection_box_yolo(detection):
 
     detection_copy = detection.copy()
@@ -67,6 +65,25 @@ def get_maximum_area_detection(detection):
     final_detection = detection[index_location]
 
     return final_detection
+
+def save_to_csv_limbs(csv_name, limbs_location_human_format):
+    format = convert_to_2D_matrix(limbs_location_human_format)
+
+    df = pd.DataFrame(format)
+    df.to_csv(csv_name)
+
+def load_from_csv_limbs(csv_name):
+    df_numpy = pd.read_csv(csv_name).to_numpy()[:, 1:]
+    return df_numpy
+
+def convert_to_2D_matrix(detection_limbs_human_format):
+    all_detections_2D_matrix = detection_limbs_human_format.reshape(detection_limbs_human_format.shape[0], detection_limbs_human_format.shape[1] * detection_limbs_human_format.shape[2])
+    return all_detections_2D_matrix
+
+def convert_to_csv_format_normalized(detection_limbs_human_format, yolo_boxes):
+    all_detections = normalize_detection_limbs(yolo_boxes, detection_limbs_human_format)
+    all_detections = convert_to_2D_matrix(all_detections)
+    return all_detections
 
 def normalize_detection_limbs(yolo_boxes, detection_limbs):
     

@@ -7,23 +7,51 @@ import YoloModel as YM
 from utils_detection import *
 import time
 import pandas as pd
+from DatasetLoader import *
 
-model = YM.YoloModel()
-model.training_mode = True
+#model = YM.YoloModel()
+#model.training_mode = True
 #model.capture_from_camera()
-all_detection, yolo_boxes = model.read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand\\p29_backhand_s1.avi")
-all_dec_mat = convert_to_2D_matrix(all_detection)
-save_to_csv_limbs("nume.csv", all_detection)
-all_detection_loaded = load_from_csv_limbs("nume.csv")
+#all_detection, yolo_boxes = model.read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand\\p29_backhand_s1.avi")
+#all_dec_mat = convert_to_2D_matrix(all_detection)
+#save_to_csv_limbs("nume.csv", all_detection)
+#all_detection_loaded = load_from_csv_limbs("nume.csv")
 
-save_to_csv_YOLO("yolo_boxes.csv", yolo_boxes)
-yolo_b = load_from_csv_YOLO("yolo_boxes.csv")
+#save_to_csv_YOLO("yolo_boxes.csv", yolo_boxes)
+#yolo_b = load_from_csv_YOLO("yolo_boxes.csv")
+#x = time.perf_counter()
+#all_detections_made_algo = load_from_csv_limbs("C:\Licenta\Dataset\\backhand\p29_backhand_s1_limbs.csv")
+#yolo_ba = load_from_csv_YOLO("C:\Licenta\Dataset\\backhand\p29_backhand_s1_yolo.csv")
+#
+#all_detections_made_algo2 = load_from_csv_limbs("C:\Licenta\Dataset\\backhand\p29_backhand_s2_limbs.csv")
+#yolo_ba2 = load_from_csv_YOLO("C:\Licenta\Dataset\\backhand\p29_backhand_s2_yolo.csv")
+#
+##print(all_detections_made_algo)
+#matrix_inverse = convert_2D_Human(all_detections_made_algo)
+#print(matrix_inverse.shape)
+#
+#matrice_norm = normalize_detection_limbs(yolo_ba, matrix_inverse)
+#csv_format = convert_to_2D_matrix(matrice_norm)
+#sequences, y_first = get_all_sequences_from_2D_format(csv_format, 3, 1) #trebuie cea normalizata
+#
+#y = time.perf_counter()
+#print(y-x)
+#
+#matrix_inverse = convert_2D_Human(all_detections_made_algo2)
+#
+#matrice_norm = normalize_detection_limbs(yolo_ba2, matrix_inverse)
+#csv_format = convert_to_2D_matrix(matrice_norm)
+#sequences2, y_second = get_all_sequences_from_2D_format(csv_format, 3, 2) #trebuie cea normalizata
+#print(sequences.shape, sequences2.shape)
+#print(np.append(sequences, sequences2, axis = 0).shape)
+#print(y_first.shape, y_second.shape)
+#print(np.append(y_first, y_second))
 
-all_detections_made_algo = load_from_csv_limbs("C:\Licenta\Dataset\\backhand\p29_backhand_s1_limbs.csv")
-yolo_ba = load_from_csv_YOLO("C:\Licenta\Dataset\\backhand\p29_backhand_s1_yolo.csv")
 
-print(all_detections_made_algo == all_dec_mat)
-print(yolo_boxes == yolo_ba)
+DL = DatasetLoader("C:\Licenta\Dataset", 5)
+
+#print(all_detections_made_algo == all_dec_mat)
+#print(yolo_boxes == yolo_ba)
 
 
 ##model_parameters = filter(lambda p: p.requires_grad, model.parameters())

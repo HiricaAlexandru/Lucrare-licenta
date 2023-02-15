@@ -20,7 +20,7 @@ def make_csv_from_folders():
 
     all_folders_input = os.listdir("C:\Licenta\VIDEO_RGB")
 
-    for folder_name in all_folders_input[4:5]:
+    for folder_name in all_folders_input[5:]:
         print(f"I process {folder_name}")
         path_output = f"{PATH_TO_SAVE}\\{folder_name}\\"
         path_current_folder = f"{PATH_TO_TRAINING}\\{folder_name}\\"

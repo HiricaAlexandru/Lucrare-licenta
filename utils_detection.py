@@ -111,3 +111,22 @@ def normalize_detection_limbs(yolo_boxes, detection_limbs):
                 detection_for_limbs[idx,jdx,1] = 0
 
     return detection_for_limbs
+
+def convert_2D_Human(matrix):
+    return matrix.reshape(matrix.shape[0], matrix.shape[1] // 2, 2)
+
+
+def get_all_sequences_from_2D_format(matrix, sequence_length, y_value):
+
+    no_rows = matrix.shape[0]
+
+    sequences = []
+
+    for index_rows in range(no_rows - sequence_length + 1):
+        sequences.append(matrix[index_rows : index_rows + sequence_length])
+
+    sequences = np.array(sequences)
+    y = np.full(sequences.shape[0], y_value)
+    
+    return sequences, y
+        

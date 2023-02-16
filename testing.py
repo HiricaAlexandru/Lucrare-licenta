@@ -50,11 +50,15 @@ from DatasetLoader import *
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-DL = DatasetLoader("F:\Licenta\Dataset", 5, device)
+test_file_names = DatasetLoader.load_test_from_file("testing_files.txt") 
+DL_training = DatasetLoader("F:\Licenta\Dataset", 5, device, False, test_file_names)
+DL_test = DatasetLoader("F:\Licenta\Dataset", 5, device, True, test_file_names)
+print(len(DL_test))
+print(len(DL_training))
 
-X, y = next(iter(DL))
-print(X.shape)
-print(y)
+#X, y = next(iter(DL))
+#print(X.shape)
+#print(y)
 
 
 #print(all_detections_made_algo == all_dec_mat)

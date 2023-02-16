@@ -2,17 +2,21 @@ from utils_detection import *
 import os
 from torch.utils.data import Dataset
 import torch
+import random
 
 class DatasetLoader(Dataset):
-    def __init__(self, dataset_folder_location, sequence_length, device):
+    def __init__(self, dataset_folder_location, sequence_length, device, test = False, test_files_dict = None):
         self.X = None
         self.Y = None
         self.sequence_length = sequence_length
         self.dataset_folder_location = dataset_folder_location
+        self.device = device
+        self.test = test
+        self.test_files_dict = test_files_dict
         self.load_dataset()
+
         self.X = torch.tensor(self.X).float().to(device)
         self.Y = torch.tensor(self.Y).float().to(device)
-        self.device = device
 
 
     def __len__(self):
@@ -26,7 +30,7 @@ class DatasetLoader(Dataset):
 
         for folder_name in all_folders_input:
             current_location = f"{self.dataset_folder_location}\\{folder_name}\\"
-            print(f"Loading data from folder {current_location}")
+            print(f"Loading {'test' if self.test == True else 'training'} data from folder {current_location}")
 
             files_name = os.listdir(current_location)
             files_names_distinct = DatasetLoader.remove_trailing_characters_file_names_return_set(files_name)
@@ -41,22 +45,43 @@ class DatasetLoader(Dataset):
                 if os.path.exists(file_path_limbs_csv) == False or os.path.exists(file_path_yolo_csv) == False:
                     print(f"Couldn't find one of the files {file_path_limbs_csv} or {file_path_yolo_csv}, quitting")
                     return
+                
+                if self.test == True and self.test_files_dict.get(file, False) == True:
+                    #if we are selecting the training files
+                    detections_made_human = load_from_csv_limbs(file_path_limbs_csv)
+                    yolo_detections = load_from_csv_YOLO(file_path_yolo_csv)
 
-                detections_made_human = load_from_csv_limbs(file_path_limbs_csv)
-                yolo_detections = load_from_csv_YOLO(file_path_yolo_csv)
+                    matrix_inverse = convert_2D_Human(detections_made_human)
 
-                matrix_inverse = convert_2D_Human(detections_made_human)
+                    matrice_norm = normalize_detection_limbs(yolo_detections, matrix_inverse)
+                    matrix_format_normalized = convert_to_2D_matrix(matrice_norm)
+                    sequences, y_vector = get_all_sequences_from_2D_format(matrix_format_normalized, self.sequence_length, y_value) #trebuie cea normalizata
 
-                matrice_norm = normalize_detection_limbs(yolo_detections, matrix_inverse)
-                matrix_format_normalized = convert_to_2D_matrix(matrice_norm)
-                sequences, y_vector = get_all_sequences_from_2D_format(matrix_format_normalized, self.sequence_length, y_value) #trebuie cea normalizata
+                    if self.X is None:
+                        self.X = sequences
+                        self.Y = y_vector
+                    else:
+                        self.X = np.append(self.X, sequences, axis = 0)
+                        self.Y = np.append(self.Y, y_vector)
+                
+                if self.test == False and self.test_files_dict.get(file, False) == False:
+                    #if not
+                    detections_made_human = load_from_csv_limbs(file_path_limbs_csv)
+                    yolo_detections = load_from_csv_YOLO(file_path_yolo_csv)
 
-                if self.X is None:
-                    self.X = sequences
-                    self.Y = y_vector
-                else:
-                    self.X = np.append(self.X, sequences, axis = 0)
-                    self.Y = np.append(self.Y, y_vector)
+                    matrix_inverse = convert_2D_Human(detections_made_human)
+
+                    matrice_norm = normalize_detection_limbs(yolo_detections, matrix_inverse)
+                    matrix_format_normalized = convert_to_2D_matrix(matrice_norm)
+                    sequences, y_vector = get_all_sequences_from_2D_format(matrix_format_normalized, self.sequence_length, y_value) #trebuie cea normalizata
+                    
+                    if self.X is None:
+                        self.X = sequences
+                        self.Y = y_vector
+                    else:
+                        self.X = np.append(self.X, sequences, axis = 0)
+                        self.Y = np.append(self.Y, y_vector)
+
 
 
     def remove_trailing_characters_file_names_return_set(files_names):
@@ -93,3 +118,41 @@ class DatasetLoader(Dataset):
         if string == 'smash':
             return 11
         return None
+    
+    def select_dataset_files_for_testing(dataset_location, test_percentage):
+        all_folders_input = os.listdir(dataset_location)
+        test_files = dict()
+
+        for folder_name in all_folders_input:
+            current_location = f"{dataset_location}\\{folder_name}\\"
+
+            files_name = os.listdir(current_location)
+            files_names_distinct = list(DatasetLoader.remove_trailing_characters_file_names_return_set(files_name))
+
+            selected_indexes = random.sample(range(0, len(files_names_distinct)), len(files_names_distinct) // test_percentage)
+
+            for i in selected_indexes:
+                test_files[files_names_distinct[i]] = True
+
+        return test_files
+
+    def save_test_to_file(file_name, dictionary):
+        f = open(file_name, 'w')
+        for file_name in dictionary.keys():
+            f.writelines(file_name + '\n')
+        f.close()
+
+    def load_test_from_file(file_name):
+        f = open(file_name, 'r')
+        test_files = dict()
+        read_line = f.readline()
+
+        while not(" " in read_line) and len(read_line) != 0:
+            read_line = read_line.rstrip('\n')
+            test_files[read_line] = True
+            read_line = f.readline()
+        
+        f.close()
+        return test_files
+
+

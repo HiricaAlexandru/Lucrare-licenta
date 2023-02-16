@@ -1,8 +1,9 @@
 import sys
 
-sys.path.append("C:\\Licenta\\Lucrare-licenta\\yolov7\\utils\\")
-sys.path.append("C:\\Licenta\\Lucrare-licenta\\yolov7\\")
+sys.path.append("F:\\Licenta\\Lucrare-licenta\\yolov7\\utils\\")
+sys.path.append("F:\\Licenta\\Lucrare-licenta\\yolov7\\")
 
+import torch
 import YoloModel as YM
 from utils_detection import *
 import time
@@ -48,7 +49,13 @@ from DatasetLoader import *
 #print(np.append(y_first, y_second))
 
 
-DL = DatasetLoader("C:\Licenta\Dataset", 5)
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+DL = DatasetLoader("F:\Licenta\Dataset", 5, device)
+
+X, y = next(iter(DL))
+print(X.shape)
+print(y)
+
 
 #print(all_detections_made_algo == all_dec_mat)
 #print(yolo_boxes == yolo_ba)

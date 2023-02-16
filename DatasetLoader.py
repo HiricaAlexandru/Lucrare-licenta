@@ -1,18 +1,26 @@
 from utils_detection import *
 import os
+from torch.utils.data import Dataset
+import torch
 
-class DatasetLoader:
-    def __init__(self, dataset_folder_location, sequence_length):
+class DatasetLoader(Dataset):
+    def __init__(self, dataset_folder_location, sequence_length, device):
         self.X = None
         self.Y = None
         self.sequence_length = sequence_length
         self.dataset_folder_location = dataset_folder_location
         self.load_dataset()
-        print(self.X.shape, self.Y.shape)
+        self.X = torch.tensor(self.X).float().to(device)
+        self.Y = torch.tensor(self.Y).float().to(device)
+        self.device = device
 
 
-        
-
+    def __len__(self):
+        return self.X.shape[0]
+    
+    def __getitem__(self, index):
+        return self.X[index], self.Y[index]
+    
     def load_dataset(self):
         all_folders_input = os.listdir(self.dataset_folder_location)
 
@@ -21,7 +29,7 @@ class DatasetLoader:
             print(f"Loading data from folder {current_location}")
 
             files_name = os.listdir(current_location)
-            files_names_distinct = self.remove_trailing_characters_file_names_return_set(files_name)
+            files_names_distinct = DatasetLoader.remove_trailing_characters_file_names_return_set(files_name)
 
             y_value = DatasetLoader.encode_string(folder_name)
 
@@ -51,7 +59,7 @@ class DatasetLoader:
                     self.Y = np.append(self.Y, y_vector)
 
 
-    def remove_trailing_characters_file_names_return_set(self, files_names):
+    def remove_trailing_characters_file_names_return_set(files_names):
         for i, file_name in enumerate(files_names):
                 #removing the trailing characters in the name
                 files_names[i] = files_names[i].rpartition("_")[0]
@@ -61,27 +69,27 @@ class DatasetLoader:
 
     def encode_string(string):
         if string == 'backhand':
-            return 1
+            return 0
         if string == 'backhand_slice':
-            return 2
+            return 1
         if string == 'backhand_volley':
-            return 3
+            return 2
         if string == 'backhand2hands':
-            return 4
+            return 3
         if string == 'flat_service':
-            return 5
+            return 4
         if string == 'forehand_flat':
-            return 6
+            return 5
         if string == 'forehand_openstands':
-            return 7
+            return 6
         if string == 'forehand_slice':
-            return 8
+            return 7
         if string == 'forehand_volley':
-            return 9
+            return 8
         if string == 'kick_service':
-            return 10
+            return 9
         if string == 'slice_service':
-            return 11
+            return 10
         if string == 'smash':
-            return 12
+            return 11
         return None

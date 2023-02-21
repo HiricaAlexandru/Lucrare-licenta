@@ -16,7 +16,7 @@ class DatasetLoader(Dataset):
         self.load_dataset()
 
         self.X = torch.tensor(self.X).float().to(device)
-        self.Y = torch.tensor(self.Y).float().to(device)
+        self.Y = torch.tensor(self.Y).long().to(device)
 
 
     def __len__(self):

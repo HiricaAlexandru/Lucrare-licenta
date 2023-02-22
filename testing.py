@@ -80,7 +80,7 @@ class LSTM(nn.Module):
         self.num_classes = 12
         self.hidden_units = hidden_units
         self.seq_length = seq_length
-        self.num_layers = 1
+        self.num_layers = 5
 
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
@@ -97,9 +97,9 @@ class LSTM(nn.Module):
         h0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_() #.to(device)
         c0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_() #.to(device) inainte de grad
 
-        _, (hn, _) = self.lstm(x, (h0, c0))
-        hn = hn.view(-1, self.hidden_units)
-        out = self.relu(hn)
+        outputs, (hn, _) = self.lstm(x, (h0, c0))
+        outputs = outputs[:, -1, :]
+        out = self.relu(outputs)
         out = self.fc_1(out)
         out = self.relu(out)
         out = self.fc_final(out)

@@ -1,7 +1,7 @@
 import sys
 
-sys.path.append("D:\\Lucrare-licenta\\yolov7\\utils\\")
-sys.path.append("D:\\Lucrare-licenta\\yolov7\\")
+sys.path.append("F:\Licenta\Lucrare-licenta\yolov7\\utils\\")
+sys.path.append("F:\Licenta\Lucrare-licenta\yolov7\\")
 
 import torch
 import YoloModel as YM
@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import tkinter
-
+import copy
 #model = YM.YoloModel()
 #model.training_mode = True
 #model.capture_from_camera()
@@ -56,15 +56,15 @@ import tkinter
 
 from torch.utils.data import DataLoader
 
-BATCH_SIZE = 16
-SEQUENCE_LENGTH = 10
+BATCH_SIZE = 64
+SEQUENCE_LENGTH = 16
 
 torch.manual_seed(99)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 test_file_names = DatasetLoader.load_test_from_file("testing_files.txt") 
-DL_training = DatasetLoader("D:\Lucrare-licenta\Dataset", SEQUENCE_LENGTH, device, False, test_file_names)
-DL_test = DatasetLoader("D:\Lucrare-licenta\Dataset", SEQUENCE_LENGTH, device, True, test_file_names)
+DL_training = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, False, test_file_names)
+DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, True, test_file_names)
 
 train_loader = DataLoader(DL_training, BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
@@ -80,43 +80,49 @@ class LSTM(nn.Module):
         self.num_classes = 12
         self.hidden_units = hidden_units
         self.seq_length = seq_length
-        self.num_layers = 5
+        self.num_layers = 10
 
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
-                            batch_first = True)
+                            batch_first = True,
+                            dropout = 0.2)
         
-        self.fc_1  = nn.Linear(self.hidden_units, 128)
+        self.fc_1  = nn.Linear(self.hidden_units, 256)
+        self.fc_2 = nn.Linear(256, 128)
         self.fc_final = nn.Linear(128, self.num_classes) 
 
+        self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU()
         
 
     def forward(self, x):
         batch_size = x.shape[0]
-        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_() #.to(device)
-        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).requires_grad_() #.to(device) inainte de grad
+        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).to("cuda:0").requires_grad_() #.to(device)
+        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_units).to("cuda:0").requires_grad_() #.to(device) inainte de grad
 
         outputs, (hn, _) = self.lstm(x, (h0, c0))
         outputs = outputs[:, -1, :]
+        outputs = self.dropout(outputs)
         out = self.relu(outputs)
         out = self.fc_1(out)
+        out = self.dropout(out)
+        out = self.relu(out)
+        out = self.fc_2(out)
+        out = self.dropout(out)
         out = self.relu(out)
         out = self.fc_final(out)
 
         return out
 
-num_epochs = 10
-learning_rate = 0.0001
+num_epochs = 130
+learning_rate = 1e-4
 
 input_size = 34
-hidden_size = 64
-model = LSTM(input_size, hidden_units=hidden_size, seq_length=SEQUENCE_LENGTH) #.to(device)
+hidden_size = 40
+model = LSTM(input_size, hidden_units=hidden_size, seq_length=SEQUENCE_LENGTH).to("cuda:0")#.to(device)
 print(model)
 loss_function = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-
-
 
 def test_model(test_loader, model, loss_function):
     num_batches = len(test_loader)
@@ -139,7 +145,9 @@ num_batches = len(train_loader)
 epochs = []
 train_loss = []
 validation_loss = []
-
+minimum_testing_error = 99999
+minimum_epoch = None
+minimum_model = None
 
 for epoch in range(num_epochs):
     model.train()
@@ -175,9 +183,20 @@ for epoch in range(num_epochs):
     avg_loss = total_loss / num_batches
     print(f"Train loss for epoch {epoch}: {avg_loss}")
     train_loss.append(avg_loss)
-    validation_loss.append(test_model(test_loader, model, loss_function))
+    test_loss = test_model(test_loader, model, loss_function)
+
+    if test_loss < minimum_testing_error:
+        minimum_testing_error = test_loss
+        minimum_model = copy.deepcopy(model.state_dict())
+        minimum_epoch = epoch
+        
+
+    validation_loss.append(test_loss)
     
 torch.save(model.state_dict(), "saved.pth")
+print(f"Minimum epoch {minimum_epoch}, minimum loss {minimum_testing_error}")
+torch.save(minimum_model, "best_model_16.pth")
+
 
 plt.plot(epochs, train_loss)
 plt.plot(epochs, validation_loss)

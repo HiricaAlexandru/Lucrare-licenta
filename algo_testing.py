@@ -18,11 +18,26 @@ import copy
 from torch.utils.data import DataLoader
 from torch import nn
 
+def test_model(test_loader, model, loss_function):
+    num_batches = len(test_loader)
+    total_loss = 0
+
+    model.eval()
+
+    with torch.no_grad():
+        for X, y in test_loader:
+            output = model(X)
+            total_loss += loss_function(output, y).item()
+
+    avg_loss = total_loss / num_batches
+    print(f"Test loss: {avg_loss}")
+    return avg_loss
+
 BATCH_SIZE = 512
 SEQUENCE_LENGTH = 16
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 test_file_names = DatasetLoader.load_test_from_file("testing_files.txt") 
-DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, True, test_file_names)
+DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, False, test_file_names)
 
 test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
 
@@ -34,17 +49,15 @@ class LSTM(nn.Module):
         self.num_classes = 12
         self.hidden_units = hidden_units
         self.seq_length = seq_length
-        self.num_layers = 10
+        self.num_layers = 5
 
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
                             batch_first = True,
-                            dropout = 0.2)
+                            dropout = 0.4)
         
-        self.fc_1  = nn.Linear(self.hidden_units, 256)
-        self.fc_2 = nn.Linear(256, 128)
+        self.fc_1  = nn.Linear(self.hidden_units, 128)
         self.fc_final = nn.Linear(128, self.num_classes) 
-
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU()
         
@@ -61,18 +74,17 @@ class LSTM(nn.Module):
         out = self.fc_1(out)
         out = self.dropout(out)
         out = self.relu(out)
-        out = self.fc_2(out)
-        out = self.dropout(out)
-        out = self.relu(out)
         out = self.fc_final(out)
 
         return out
 
 input_size = 34
-hidden_size = 40
+hidden_size = 512
 model = LSTM(input_size, hidden_units=hidden_size, seq_length=SEQUENCE_LENGTH).to("cuda:0")#.to(device)
-model.load_state_dict(torch.load("F:\Licenta\Lucrare-licenta\\best_model_16.pth"))
+model.load_state_dict(torch.load("F:\Licenta\Lucrare-licenta\intermediary_results\saved_checkpoint_LSTM2_40_epoch.pth"))
 model.eval()
+
+specifics = [0 for i in range(12)] #variable that holds correct guessed value
 
 with torch.no_grad():
         nr_true = 0
@@ -87,15 +99,16 @@ with torch.no_grad():
             maximum_values, predicted = torch.max(output.data, 1)
             
             for i in range(len(predicted)):
-                if maximum_values[i] < 0.4:
+                if maximum_values[i] < 0.5:
                     predicted[i] = -1
 
             #print(output)
             #print("predicted=", predicted)
             #print("y=", y)
-            for element in (predicted==y):
+            for i, element in enumerate(predicted==y):
                 if element == True:
                     nr_true += 1
+                    specifics[predicted[i]] += 1
                 else:
                     nr_false += 1
 
@@ -125,5 +138,9 @@ with torch.no_grad():
                 else:
                     metric2_false += 1
 
+loss_function = nn.CrossEntropyLoss()
+print("Eroare entropie = ", test_model(test_loader, model, loss_function))
+
 print(f'Metric 1, num true = {nr_true}, num_false = {nr_false}')
 print(f'Metric 2, num true = {metric2_true}, num_false = {metric2_false}')
+print(specifics)

@@ -80,17 +80,15 @@ class LSTM(nn.Module):
         self.num_classes = 12
         self.hidden_units = hidden_units
         self.seq_length = seq_length
-        self.num_layers = 10
+        self.num_layers = 5
 
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
                             batch_first = True,
-                            dropout = 0.2)
+                            dropout = 0.4)
         
-        self.fc_1  = nn.Linear(self.hidden_units, 256)
-        self.fc_2 = nn.Linear(256, 128)
+        self.fc_1  = nn.Linear(self.hidden_units, 128)
         self.fc_final = nn.Linear(128, self.num_classes) 
-
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU()
         
@@ -107,18 +105,15 @@ class LSTM(nn.Module):
         out = self.fc_1(out)
         out = self.dropout(out)
         out = self.relu(out)
-        out = self.fc_2(out)
-        out = self.dropout(out)
-        out = self.relu(out)
         out = self.fc_final(out)
 
         return out
 
-num_epochs = 130
-learning_rate = 1e-4
+num_epochs = 40
+learning_rate = 1e-4 #cu 1e-4 converge mai rpd
 
 input_size = 34
-hidden_size = 40
+hidden_size = 512
 model = LSTM(input_size, hidden_units=hidden_size, seq_length=SEQUENCE_LENGTH).to("cuda:0")#.to(device)
 print(model)
 loss_function = nn.CrossEntropyLoss()
@@ -150,6 +145,7 @@ minimum_epoch = None
 minimum_model = None
 
 for epoch in range(num_epochs):
+    time_begin = time.perf_counter()
     model.train()
     total_loss = 0
     epochs.append(epoch)
@@ -163,27 +159,15 @@ for epoch in range(num_epochs):
 
         total_loss += loss.item()
 
-    #with torch.no_grad():
-    #    nr_true = 0
-    #    nr_false = 0
-    #    for X,y in iter(test_loader):
-    #        output = model(X)
-    #        _, predicted = torch.max(output.data, 1)
-    #        #print(output)
-    #        #print(predicted)
-    #        for element in (predicted==y):
-    #            if element == True:
-    #                nr_true += 1
-    #            else:
-    #                nr_false += 1
-#
-    #    print(f"nr true: {nr_true}, nr false {nr_false}")
-#
+    time_end = time.perf_counter()
 
     avg_loss = total_loss / num_batches
-    print(f"Train loss for epoch {epoch}: {avg_loss}")
+    print(f"Train loss for epoch {epoch}: {avg_loss}, duration {time_end-time_begin} seconds")
     train_loss.append(avg_loss)
     test_loss = test_model(test_loader, model, loss_function)
+
+    if epoch % 10 == 0:
+        torch.save(model.state_dict(), f"intermediary_results\\saved_checkpoint_{model.__class__.__name__}_{epoch}_epoch.pth")
 
     if test_loss < minimum_testing_error:
         minimum_testing_error = test_loss
@@ -195,7 +179,7 @@ for epoch in range(num_epochs):
     
 torch.save(model.state_dict(), "saved.pth")
 print(f"Minimum epoch {minimum_epoch}, minimum loss {minimum_testing_error}")
-torch.save(minimum_model, "best_model_16.pth")
+torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
 
 
 plt.plot(epochs, train_loss)

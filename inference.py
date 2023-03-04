@@ -13,14 +13,13 @@ from Vizualize import *
 
 MODEL_PATH = "F:\Licenta\Lucrare-licenta\intermediary_results\\best_model_LSTM.pth"
 VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\Federer1.mp4"
+#VIDEO_PATH = "F:\Licenta\VIDEO_RGB\\backhand_slice\\p20_bslice_s2.avi"
 #VIDEO_PATH = "F:\\Licenta\\VIDEO_RGB\\backhand_volley\\p1_bvolley_s2.avi"
-SEQUENCE_LENGTH = 16
-INPUT_SIZE = 34
-HIDDEN_SIZE = 512
 
+SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE = models.LSTM_shallow.return_train_data()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-model = models.LSTM(INPUT_SIZE, hidden_units=HIDDEN_SIZE, seq_length=SEQUENCE_LENGTH).to(device)
+model = models.LSTM_shallow(INPUT_SIZE, hidden_units=HIDDEN_SIZE, seq_length=SEQUENCE_LENGTH).to(device)
 model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()
 
@@ -41,6 +40,7 @@ all_detections_sequence, _ = utils_detection.get_all_sequences_from_2D_format(al
 all_detections_sequence = torch.tensor(all_detections_sequence).float().to(device)
 
 output_labels = []
+confidence = []
 
 test_loader = DataLoader(all_detections_sequence, 1, shuffle=False)
 
@@ -53,7 +53,9 @@ with torch.no_grad():
         for i in range(len(predicted)):
             if maximum_values[i] < 0.5:
                 predicted[i] = -1
+        
         output_labels.append(predicted[i].item())
+        confidence.append(maximum_values[i].item())
 
 print("TOT OUTPUT",output_labels)
 
@@ -62,7 +64,7 @@ output_names = [None for i in range(len(output_labels))]
 for i in range(len(output_labels)):
     output_names[i] = decode_output(output_labels[i])[0]
 
-video_write(VIDEO_PATH, yolo_boxes, output_names)
+video_write(VIDEO_PATH, yolo_boxes, output_names, confidence)
 
 
 

@@ -80,16 +80,16 @@ class LSTM(nn.Module):
         self.num_classes = 12
         self.hidden_units = hidden_units
         self.seq_length = seq_length
-        self.num_layers = 5
+        self.num_layers = 3
 
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
                             batch_first = True,
-                            dropout = 0.4)
+                            dropout = 0.6)
         
-        self.fc_1  = nn.Linear(self.hidden_units, 128)
-        self.fc_final = nn.Linear(128, self.num_classes) 
-        self.dropout = nn.Dropout(0.5)
+        self.fc_1  = nn.Linear(self.hidden_units, 256)
+        self.fc_final = nn.Linear(256, self.num_classes) 
+        self.dropout = nn.Dropout(0.7)
         self.relu = nn.ReLU()
         
 
@@ -125,15 +125,66 @@ def test_model(test_loader, model, loss_function):
 
     model.eval()
 
+    specifics = [0 for i in range(12)] #variable that holds correct guessed value
+
     with torch.no_grad():
-        for X, y in test_loader:
+        nr_true = 0
+        nr_false = 0
+        metric2_true = 0
+        metric2_false = 0
+        for X,y in iter(test_loader):
             output = model(X)
             total_loss += loss_function(output, y).item()
+            #print(output.data)
+            softmax = nn.Softmax(dim = 1)
+            output = softmax(output)
+            maximum_values, predicted = torch.max(output.data, 1)
+            
+            for i in range(len(predicted)):
+                if maximum_values[i] < 0.5:
+                    predicted[i] = -1
 
+            #print(output)
+            #print("predicted=", predicted)
+            #print("y=", y)
+            for i, element in enumerate(predicted==y):
+                if element == True:
+                    nr_true += 1
+                    specifics[predicted[i]] += 1
+                else:
+                    nr_false += 1
+
+            #for i in range(len(y)):
+            #    if y[i] in [0,1,2,3]:
+            #        y[i] = 0
+            #    elif y[i] in [4,5,6,7,8]:
+            #        y[i] = 1
+            #    elif y[i] in [9,10]:
+            #        y[i] = 2
+            #    elif y[i] in [11]:
+            #        y[i] = 3
+#
+            #for i in range(len(predicted)):
+            #    if predicted[i] in [0,1,2,3]:
+            #        predicted[i] = 0
+            #    elif predicted[i] in [4,5,6,7,8]:
+            #        predicted[i] = 1
+            #    elif predicted[i] in [9,10]:
+            #        predicted[i] = 2
+            #    elif predicted[i] in [11]:
+            #        predicted[i] = 3
+#
+            #for element in (predicted==y):
+            #    if element == True:
+            #        metric2_true += 1
+            #    else:
+            #        metric2_false += 1
+
+    print(f'    Metric 1, num true = {nr_true}, num_false = {nr_false}, precizie = {nr_true / (nr_true + nr_false)}')
+    #print(f'Metric 2, num true = {metric2_true}, num_false = {metric2_false}, precizie = {metric2_true / (metric2_true + metric2_false)}')
     avg_loss = total_loss / num_batches
-    print(f"Test loss: {avg_loss}")
+    print(f"    Test loss: {avg_loss}")
     return avg_loss
-
 
 num_batches = len(train_loader)
 
@@ -155,6 +206,8 @@ for epoch in range(num_epochs):
 
         optimizer.zero_grad()
         loss.backward()
+
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.3) #model mare, 0.8
         optimizer.step()
 
         total_loss += loss.item()

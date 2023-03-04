@@ -27,7 +27,7 @@ def plot_yolo_boxes(image, yolo_boxes, label = "Default"):
 
     return image_to_draw
 
-def video_write(path_to_video_original, yolo_boxes, labels, sequence_lenght = 16):
+def video_write(path_to_video_original, yolo_boxes, labels, confidence, sequence_lenght = 16):
     width, height, fps = None, None, None
     cap = cv2.VideoCapture(path_to_video_original)
 
@@ -42,7 +42,7 @@ def video_write(path_to_video_original, yolo_boxes, labels, sequence_lenght = 16
     vid_write_image = letterbox(cap.read()[1], 960, stride=64, auto=True)[0]
     resize_height, resize_width = vid_write_image.shape[:2]
 
-    capWriter = cv2.VideoWriter(f"keypoint1.mp4",
+    capWriter = cv2.VideoWriter(f"keypoint3_model_shallow.mp4",
                             cv2.VideoWriter_fourcc(*'mp4v'), fps,
                             (resize_width, resize_height))
     number_frame = -1
@@ -52,7 +52,7 @@ def video_write(path_to_video_original, yolo_boxes, labels, sequence_lenght = 16
         number_frame+=1
         if ret == True:
             image = letterbox(frame, 960, stride=64, auto=True)[0]
-            image_copy = plot_yolo_boxes(image, yolo_boxes[number_frame], labels[number_frame//sequence_lenght])
+            image_copy = plot_yolo_boxes(image, yolo_boxes[number_frame], f"{labels[number_frame//sequence_lenght]}: {confidence[number_frame//sequence_lenght]}")
             capWriter.write(image_copy)
         else:
             break

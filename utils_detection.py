@@ -2,6 +2,7 @@ from general import xywh2xyxy
 import numpy as np
 import sys
 import pandas as pd
+
 def get_detection_box_yolo(detection):
 
     detection_copy = detection.copy()

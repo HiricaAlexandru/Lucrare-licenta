@@ -37,7 +37,7 @@ BATCH_SIZE = 512
 SEQUENCE_LENGTH = 16
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 test_file_names = DatasetLoader.load_test_from_file("testing_files.txt") 
-DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, False, test_file_names)
+DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, True, test_file_names)
 
 test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
 

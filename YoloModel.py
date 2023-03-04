@@ -68,9 +68,9 @@ class YoloModel:
         vid_write_image = letterbox(cap.read()[1], 960, stride=64, auto=True)[0]
         resize_height, resize_width = vid_write_image.shape[:2]
 
-        #capWriter = cv2.VideoWriter(f"keypoint.mp4",
-        #                        cv2.VideoWriter_fourcc(*'mp4v'), fps,
-        #                        (resize_width, resize_height))
+        capWriter = cv2.VideoWriter(f"keypoint.mp4",
+                                cv2.VideoWriter_fourcc(*'mp4v'), fps,
+                                (resize_width, resize_height))
 
         all_detections = None
         yolo_boxes = None
@@ -101,13 +101,13 @@ class YoloModel:
 
                     image_drawn = visualize_box_detection(detection_boxes, output, image_)
 
-                #capWriter.write(image_drawn)
+                capWriter.write(image_drawn)
 
             else:
                 break
 
         cap.release()
-        #capWriter.release()
+        capWriter.release()
 
         return all_detections, yolo_boxes
 

@@ -95,6 +95,7 @@ def convert_to_csv_format_normalized(detection_limbs_human_format, yolo_boxes):
 
 def normalize_detection_limbs(yolo_boxes, detection_limbs):
     #normalizez by the same yolo_box corresponding to the detection
+    #detection limbs is in human_format
     detection_for_limbs = detection_limbs.copy()
 
     for idx in range(yolo_boxes.shape[0]):
@@ -116,13 +117,13 @@ def convert_2D_Human(matrix):
     return matrix.reshape(matrix.shape[0], matrix.shape[1] // 2, 2)
 
 
-def get_all_sequences_from_2D_format(matrix, sequence_length, y_value):
+def get_all_sequences_from_2D_format(matrix, sequence_length, y_value, step = 1):
 
     no_rows = matrix.shape[0]
 
     sequences = []
 
-    for index_rows in range(no_rows - sequence_length + 1):
+    for index_rows in range(0, no_rows - sequence_length + 1, step):
         sequences.append(matrix[index_rows : index_rows + sequence_length])
 
     sequences = np.array(sequences)

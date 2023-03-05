@@ -70,9 +70,9 @@ class YoloModel:
         vid_write_image = letterbox(cap.read()[1], 960, stride=64, auto=True)[0]
         resize_height, resize_width = vid_write_image.shape[:2]
 
-        capWriter = cv2.VideoWriter(f"keypoint.mp4",
-                                cv2.VideoWriter_fourcc(*'mp4v'), fps,
-                                (resize_width, resize_height))
+        #capWriter = cv2.VideoWriter(f"keypoint.mp4",
+        #                        cv2.VideoWriter_fourcc(*'mp4v'), fps,
+        #                        (resize_width, resize_height))
 
         all_detections = None
         yolo_boxes = None
@@ -101,7 +101,7 @@ class YoloModel:
                         all_detections = np.append(all_detections, detection_limbs_human_format, axis = 0)
                         yolo_boxes = np.append(yolo_boxes, detection_boxes, axis = 0)
 
-                    image_drawn = visualize_box_detection(detection_boxes, output, image_)
+                    #image_drawn = visualize_box_detection(detection_boxes, output, image_)
                 
                 elif self.inference == True:
                     #if no box was detected then we will return the invalid values being full -1
@@ -112,14 +112,14 @@ class YoloModel:
                         yolo_boxes = np.append(yolo_boxes, np.array([[-1, -1, -1, -1, -1]]), axis = 0)
                         all_detections = np.append(all_detections, np.array([[[0, 0] for i in range(17)]]), axis = 0)
 
-                capWriter.write(image_drawn)
+                #capWriter.write(image_drawn)
 
             else:
                 break
 
         self.yolo_boxes = yolo_boxes
         cap.release()
-        capWriter.release()
+        #capWriter.release()
 
         return all_detections, yolo_boxes
 

@@ -26,11 +26,11 @@ def plot_yolo_boxes(image, yolo_boxes, label = "Default"):
     if yolo_boxes[0] == -1 and yolo_boxes[1] == -1 and yolo_boxes[2] == -1 and yolo_boxes[3] == -1:
         return image_to_draw
     
-    plot_one_box(yolo_boxes, image_to_draw, label=label)
+    plot_one_box(yolo_boxes, image_to_draw, label=label, color=[255,0,0]) #to be red
 
     return image_to_draw
 
-def video_write(path_to_video_original, yolo_boxes, labels, confidence, sequence_lenght = 16):
+def video_write(path_to_video_original, yolo_boxes, labels, confidence, name_of_output, sequence_lenght = 16):
     width, height, fps = None, None, None
     cap = cv2.VideoCapture(path_to_video_original)
 
@@ -46,7 +46,7 @@ def video_write(path_to_video_original, yolo_boxes, labels, confidence, sequence
     vid_write_image = letterbox(frame, 960, stride=64, auto=True)[0]
     resize_height, resize_width = vid_write_image.shape[:2]
 
-    capWriter = cv2.VideoWriter(f"keypoint7_model_shallow.mp4",
+    capWriter = cv2.VideoWriter(f"demo_videos\\{name_of_output}.mp4",
                             cv2.VideoWriter_fourcc(*'mp4v'), fps,
                             (resize_width, resize_height))
     number_frame = 0

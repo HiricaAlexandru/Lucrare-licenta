@@ -23,7 +23,9 @@ class YoloModel:
         weigths = torch.load('yolov7\yolov7-w6-pose.pt', map_location=self.device)
         self.model = weigths['model']
         _ = self.model.float().eval()
-
+        
+        self.yolo_boxes = None
+        self.inference = False
         self.training_mode = False
         self.verbose = False
 
@@ -100,12 +102,22 @@ class YoloModel:
                         yolo_boxes = np.append(yolo_boxes, detection_boxes, axis = 0)
 
                     image_drawn = visualize_box_detection(detection_boxes, output, image_)
+                
+                elif self.inference == True:
+                    #if no box was detected then we will return the invalid values being full -1
+                    if yolo_boxes is None:
+                        yolo_boxes = np.array([-1, -1, -1, -1, -1])
+                        all_detections = np.array([[0 for i in range(34)]])
+                    else:
+                        yolo_boxes = np.append(yolo_boxes, np.array([[-1, -1, -1, -1, -1]]), axis = 0)
+                        all_detections = np.append(all_detections, np.array([[[0, 0] for i in range(17)]]), axis = 0)
 
                 capWriter.write(image_drawn)
 
             else:
                 break
 
+        self.yolo_boxes = yolo_boxes
         cap.release()
         capWriter.release()
 

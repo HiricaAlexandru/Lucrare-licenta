@@ -22,7 +22,10 @@ def visualize_box_detection(detection, algo_output, image, label = "Default"):
 
 def plot_yolo_boxes(image, yolo_boxes, label = "Default"):
     image_to_draw = image.copy()
-
+    
+    if yolo_boxes[0] == -1 and yolo_boxes[1] == -1 and yolo_boxes[2] == -1 and yolo_boxes[3] == -1:
+        return image_to_draw
+    
     plot_one_box(yolo_boxes, image_to_draw, label=label)
 
     return image_to_draw
@@ -39,24 +42,39 @@ def video_write(path_to_video_original, yolo_boxes, labels, confidence, sequence
         height = int(cap.get(4))
         fps = int(cap.get(5))
 
-    vid_write_image = letterbox(cap.read()[1], 960, stride=64, auto=True)[0]
+    ret, frame = cap.read()
+    vid_write_image = letterbox(frame, 960, stride=64, auto=True)[0]
     resize_height, resize_width = vid_write_image.shape[:2]
 
-    capWriter = cv2.VideoWriter(f"keypoint3_model_shallow.mp4",
+    capWriter = cv2.VideoWriter(f"keypoint7_model_shallow.mp4",
                             cv2.VideoWriter_fourcc(*'mp4v'), fps,
                             (resize_width, resize_height))
-    number_frame = -1
+    number_frame = 0
+    frame = vid_write_image
+    
+    length_of_sequences = len(labels)
 
     while cap.isOpened():
-        ret, frame = cap.read()
-        number_frame+=1
         if ret == True:
             image = letterbox(frame, 960, stride=64, auto=True)[0]
-            image_copy = plot_yolo_boxes(image, yolo_boxes[number_frame], f"{labels[number_frame//sequence_lenght]}: {confidence[number_frame//sequence_lenght]}")
+            image_copy = image
+            if number_frame//sequence_lenght < length_of_sequences:
+                image_copy = plot_yolo_boxes(image, yolo_boxes[number_frame], f"{labels[number_frame//sequence_lenght]}")
+            else:
+                try:
+                    image_copy = plot_yolo_boxes(image, yolo_boxes[number_frame], "NoValues")
+                except:
+                    pass
+                        
             capWriter.write(image_copy)
         else:
             break
 
+        ret, frame = cap.read()
+        number_frame+=1
+
+
+    print(number_frame)
     cap.release()
     capWriter.release()
 
@@ -84,7 +102,7 @@ def decode_output(number_label):
         if number_label == 10:
             return 'slice_service', "service"
         if number_label == 11:
-            return 'smash'
+            return 'smash', 'smash'
         if number_label == -1:
-            return "no_move"
+            return "no_move", 'no_move'
         return None

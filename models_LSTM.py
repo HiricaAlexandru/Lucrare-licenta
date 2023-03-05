@@ -53,8 +53,6 @@ class LSTM(nn.Module):
         self.seq_length = seq_length
         self.num_layers = 5
 
-        
-
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
                             batch_first = True,

@@ -14,50 +14,11 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import tkinter
 import copy
-#model = YM.YoloModel()
-#model.training_mode = True
-#model.capture_from_camera()
-#all_detection, yolo_boxes = model.read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand\\p29_backhand_s1.avi")
-#all_dec_mat = convert_to_2D_matrix(all_detection)
-#save_to_csv_limbs("nume.csv", all_detection)
-#all_detection_loaded = load_from_csv_limbs("nume.csv")
-
-#save_to_csv_YOLO("yolo_boxes.csv", yolo_boxes)
-#yolo_b = load_from_csv_YOLO("yolo_boxes.csv")
-#x = time.perf_counter()
-#all_detections_made_algo = load_from_csv_limbs("C:\Licenta\Dataset\\backhand\p29_backhand_s1_limbs.csv")
-#yolo_ba = load_from_csv_YOLO("C:\Licenta\Dataset\\backhand\p29_backhand_s1_yolo.csv")
-#
-#all_detections_made_algo2 = load_from_csv_limbs("C:\Licenta\Dataset\\backhand\p29_backhand_s2_limbs.csv")
-#yolo_ba2 = load_from_csv_YOLO("C:\Licenta\Dataset\\backhand\p29_backhand_s2_yolo.csv")
-#
-##print(all_detections_made_algo)
-#matrix_inverse = convert_2D_Human(all_detections_made_algo)
-#print(matrix_inverse.shape)
-#
-#matrice_norm = normalize_detection_limbs(yolo_ba, matrix_inverse)
-#csv_format = convert_to_2D_matrix(matrice_norm)
-#sequences, y_first = get_all_sequences_from_2D_format(csv_format, 3, 1) #trebuie cea normalizata
-#
-#y = time.perf_counter()
-#print(y-x)
-#
-#matrix_inverse = convert_2D_Human(all_detections_made_algo2)
-#
-#matrice_norm = normalize_detection_limbs(yolo_ba2, matrix_inverse)
-#csv_format = convert_to_2D_matrix(matrice_norm)
-#sequences2, y_second = get_all_sequences_from_2D_format(csv_format, 3, 2) #trebuie cea normalizata
-#print(sequences.shape, sequences2.shape)
-#print(np.append(sequences, sequences2, axis = 0).shape)
-#print(y_first.shape, y_second.shape)
-#print(np.append(y_first, y_second))
-
-#useful!
 
 from torch.utils.data import DataLoader
 
-BATCH_SIZE = 64
-SEQUENCE_LENGTH = 16
+BATCH_SIZE = 128
+SEQUENCE_LENGTH = 20
 
 torch.manual_seed(99)
 
@@ -73,6 +34,8 @@ test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
 from torch import nn
 
 class LSTM(nn.Module):
+    #best results!
+    #batch size 64
     def __init__(self, num_features, hidden_units, seq_length):
         super(LSTM, self).__init__()
 
@@ -108,6 +71,13 @@ class LSTM(nn.Module):
         out = self.fc_final(out)
 
         return out
+    
+    def return_train_data():
+        SEQUENCE_LENGTH = 16
+        INPUT_SIZE = 34
+        HIDDEN_SIZE = 512
+
+        return SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE
 
 num_epochs = 40
 learning_rate = 1e-4 #cu 1e-4 converge mai rpd
@@ -144,9 +114,6 @@ def test_model(test_loader, model, loss_function):
                 if maximum_values[i] < 0.5:
                     predicted[i] = -1
 
-            #print(output)
-            #print("predicted=", predicted)
-            #print("y=", y)
             for i, element in enumerate(predicted==y):
                 if element == True:
                     nr_true += 1
@@ -154,34 +121,7 @@ def test_model(test_loader, model, loss_function):
                 else:
                     nr_false += 1
 
-            #for i in range(len(y)):
-            #    if y[i] in [0,1,2,3]:
-            #        y[i] = 0
-            #    elif y[i] in [4,5,6,7,8]:
-            #        y[i] = 1
-            #    elif y[i] in [9,10]:
-            #        y[i] = 2
-            #    elif y[i] in [11]:
-            #        y[i] = 3
-#
-            #for i in range(len(predicted)):
-            #    if predicted[i] in [0,1,2,3]:
-            #        predicted[i] = 0
-            #    elif predicted[i] in [4,5,6,7,8]:
-            #        predicted[i] = 1
-            #    elif predicted[i] in [9,10]:
-            #        predicted[i] = 2
-            #    elif predicted[i] in [11]:
-            #        predicted[i] = 3
-#
-            #for element in (predicted==y):
-            #    if element == True:
-            #        metric2_true += 1
-            #    else:
-            #        metric2_false += 1
-
-    print(f'    Metric 1, num true = {nr_true}, num_false = {nr_false}, precizie = {nr_true / (nr_true + nr_false)}')
-    #print(f'Metric 2, num true = {metric2_true}, num_false = {metric2_false}, precizie = {metric2_true / (metric2_true + metric2_false)}')
+    print(f'    Metric 1, num true = {nr_true}, num_false = {nr_false}, precision = {nr_true / (nr_true + nr_false)}')
     avg_loss = total_loss / num_batches
     print(f"    Test loss: {avg_loss}")
     return avg_loss
@@ -207,7 +147,7 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.3) #model mare, 0.8
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.05) #model mare, 0.8
         optimizer.step()
 
         total_loss += loss.item()
@@ -219,13 +159,14 @@ for epoch in range(num_epochs):
     train_loss.append(avg_loss)
     test_loss = test_model(test_loader, model, loss_function)
 
-    if epoch % 10 == 0:
-        torch.save(model.state_dict(), f"intermediary_results\\saved_checkpoint_{model.__class__.__name__}_{epoch}_epoch.pth")
-
     if test_loss < minimum_testing_error:
         minimum_testing_error = test_loss
         minimum_model = copy.deepcopy(model.state_dict())
         minimum_epoch = epoch
+
+    if epoch % 10 == 0:
+        torch.save(model.state_dict(), f"intermediary_results\\saved_checkpoint_{model.__class__.__name__}_{epoch}_epoch.pth")
+        torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
         
 
     validation_loss.append(test_loss)
@@ -238,33 +179,3 @@ torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
 plt.plot(epochs, train_loss)
 plt.plot(epochs, validation_loss)
 plt.show()
-#X, y = next(iter(DL))
-#print(X.shape)
-#print(y)
-
-
-#print(all_detections_made_algo == all_dec_mat)
-#print(yolo_boxes == yolo_ba)
-
-
-##model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-##params = sum([np.prod(p.size()) for p in model_parameters])
-##print(params)
-##read_from_video("C:\\Licenta\\VIDEO_RGB\\backhand2hands\\p4_backhand2h_s1.avi")
-#capture_from_camera()
-#image = cv2.imread('C:\Licenta\Lucrare-licenta\yolov7\inference\images\zidane.jpg')
-#
-#output, image_ = inference_on_image(image)
-#
-##output = get_maximum_area_detection(output)
-#detection_boxes = get_detection_box_yolo(output)
-##
-#detection_limbs, confidence_for_limb, detection_limbs_human_format = get_limbs_postion(output)
-#detection_normalized = normalize_detection_limbs(detection_boxes, detection_limbs_human_format)
-#print(detection_normalized)
-#image_drawn = visualize_box_detection(detection_boxes, output, image_)
-#cv2.imshow("LALA", image_drawn)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
-#
-#

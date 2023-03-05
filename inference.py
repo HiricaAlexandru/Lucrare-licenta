@@ -12,9 +12,10 @@ from torch import nn
 from Vizualize import *
 
 MODEL_PATH = "F:\Licenta\Lucrare-licenta\models\intermediary_results_LSTMthird_shallow\\best_model_LSTM.pth"
-#VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\tennis_match_crop.mp4"
-VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\bojana.mp4"
-NAME_OF_OUTPUT = "tennis_match_cropped"
+VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\tennis_match_crop.mp4"
+#VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\bojana_updated.mp4"
+NAME_OF_OUTPUT = "tennis_match_crop"
+REVERSED = True
 #VIDEO_PATH = "F:\Licenta\VIDEO_RGB\\backhand_slice\\p20_bslice_s2.avi"
 #VIDEO_PATH = "F:\\Licenta\\VIDEO_RGB\\backhand_volley\\p1_bvolley_s2.avi"
 
@@ -64,6 +65,9 @@ with torch.no_grad():
 output_names = [None for i in range(len(output_labels))]
 
 for i in range(len(output_labels)):
-   output_names[i] = decode_output(output_labels[i])[0]
+    if REVERSED == True:
+        output_names[i] = decode_output(output_labels[i])[2]
+    else:
+        output_names[i] = decode_output(output_labels[i])[0]
 
 video_write(VIDEO_PATH, yolo_boxes, output_names, confidence, NAME_OF_OUTPUT)

@@ -18,7 +18,7 @@ import copy
 from torch.utils.data import DataLoader
 
 BATCH_SIZE = 128
-SEQUENCE_LENGTH = 20
+SEQUENCE_LENGTH = 23
 
 torch.manual_seed(99)
 
@@ -30,6 +30,7 @@ DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, True, tes
 train_loader = DataLoader(DL_training, BATCH_SIZE, shuffle=True)
 test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
 
+print("Loaded training files of size, ", DL_training.X.shape)
 
 from torch import nn
 
@@ -48,7 +49,7 @@ class LSTM(nn.Module):
         self.lstm = nn.LSTM(input_size = self.num_features, 
                             hidden_size = self.hidden_units, num_layers = self.num_layers, 
                             batch_first = True,
-                            dropout = 0.6)
+                            dropout = 0.7)
         
         self.fc_1  = nn.Linear(self.hidden_units, 256)
         self.fc_final = nn.Linear(256, self.num_classes) 
@@ -73,21 +74,23 @@ class LSTM(nn.Module):
         return out
     
     def return_train_data():
-        SEQUENCE_LENGTH = 16
+        SEQUENCE_LENGTH = 23
         INPUT_SIZE = 34
         HIDDEN_SIZE = 512
 
         return SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE
 
-num_epochs = 40
-learning_rate = 1e-4 #cu 1e-4 converge mai rpd
+num_epochs = 120
+learning_rate = 1e-2 #pentru ADAM cu 1e-4 converge mai rpd
 
 input_size = 34
 hidden_size = 512
 model = LSTM(input_size, hidden_units=hidden_size, seq_length=SEQUENCE_LENGTH).to("cuda:0")#.to(device)
 print(model)
 loss_function = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+#optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate, momentum=0.99)
+
 
 def test_model(test_loader, model, loss_function):
     num_batches = len(test_loader)
@@ -147,7 +150,7 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.05) #model mare, 0.8
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5) #model mare, 0.8
         optimizer.step()
 
         total_loss += loss.item()
@@ -164,8 +167,9 @@ for epoch in range(num_epochs):
         minimum_model = copy.deepcopy(model.state_dict())
         minimum_epoch = epoch
 
+    torch.save(model.state_dict(), f"intermediary_results\\saved_checkpoint_{model.__class__.__name__}_{epoch}_epoch.pth")
+
     if epoch % 10 == 0:
-        torch.save(model.state_dict(), f"intermediary_results\\saved_checkpoint_{model.__class__.__name__}_{epoch}_epoch.pth")
         torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
         
 

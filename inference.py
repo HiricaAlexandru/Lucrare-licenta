@@ -11,10 +11,11 @@ from torch.utils.data import DataLoader
 from torch import nn
 from Vizualize import *
 
-MODEL_PATH = "F:\Licenta\Lucrare-licenta\models\intermediary_results_LSTMthird_shallow\\best_model_LSTM.pth"
+MODEL_PATH = "F:\Licenta\Lucrare-licenta\\best_model_LSTM.pth"
 VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\tennis_match_crop.mp4"
 #VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\bojana_updated.mp4"
-NAME_OF_OUTPUT = "tennis_match_crop"
+#VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\Federer1.mp4"
+NAME_OF_OUTPUT = "tenis_match_crop_20_sequence"
 REVERSED = True
 #VIDEO_PATH = "F:\Licenta\VIDEO_RGB\\backhand_slice\\p20_bslice_s2.avi"
 #VIDEO_PATH = "F:\\Licenta\\VIDEO_RGB\\backhand_volley\\p1_bvolley_s2.avi"

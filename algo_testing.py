@@ -36,7 +36,7 @@ def test_model(test_loader, model, loss_function):
 
 #loading the data necessary for model creation
 BATCH_SIZE = 512
-SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE = models_LSTM.LSTM_best_but_wider.return_train_data()
+SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE = models_LSTM.LSTM_shallow_20_sequence.return_train_data()
 MODEL_PATH = "F:\Licenta\Lucrare-licenta\\best_model_LSTM.pth"
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -46,7 +46,7 @@ DL_test = DatasetLoader("F:\Licenta\Dataset", SEQUENCE_LENGTH, device, True, tes
 test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
 
 
-model = models_LSTM.LSTM_best_but_wider(INPUT_SIZE, hidden_units=HIDDEN_SIZE, seq_length=SEQUENCE_LENGTH).to(device)
+model = models_LSTM.LSTM_shallow_20_sequence(INPUT_SIZE, hidden_units=HIDDEN_SIZE, seq_length=SEQUENCE_LENGTH).to(device)
 model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()
 

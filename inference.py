@@ -13,10 +13,12 @@ from Vizualize import *
 
 MODEL_PATH = "F:\Licenta\Lucrare-licenta\models\LSTM_shallow_23_sequence\saved_checkpoint_LSTM_27_epoch_best.pth"
 #VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\tennis_match_crop.mp4"
+#VIDEO_PATH = "F:\Licenta\\test_videos\halep_cut.mp4"
+VIDEO_PATH = "F:\Licenta\\test_videos\Djokovic.mp4"
 #VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\bojana_updated.mp4"
-VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\Federer1.mp4"
-NAME_OF_OUTPUT = "Federer_23_sequence"#"tennis_match_23_sequence"
-REVERSED = True
+#VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\Federer1.mp4"
+NAME_OF_OUTPUT = "Djokovic_23_sequence"
+REVERSED = False
 #VIDEO_PATH = "F:\Licenta\VIDEO_RGB\\backhand_slice\\p20_bslice_s2.avi"
 #VIDEO_PATH = "F:\\Licenta\\VIDEO_RGB\\backhand_volley\\p1_bvolley_s2.avi"
 

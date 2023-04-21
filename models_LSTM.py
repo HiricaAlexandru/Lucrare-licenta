@@ -271,7 +271,6 @@ class LSTM_best_but_wider(nn.Module):
         return SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE
 
 class LSTM_shallow_20_sequence(nn.Module):
-    #best results!
     #batch size 64
     def __init__(self, num_features, hidden_units, seq_length):
         super(LSTM_shallow_20_sequence, self).__init__()
@@ -320,6 +319,7 @@ class LSTM_shallow_23_sequence(nn.Module):
     #batch size 128
     #optimizer = torch.optim.Adam(model.parameters(), lr = e1-4)
     #cliiping 0.05
+    #best!
     def __init__(self, num_features, hidden_units, seq_length):
         super(LSTM_shallow_23_sequence, self).__init__()
 

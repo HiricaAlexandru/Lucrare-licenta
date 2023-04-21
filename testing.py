@@ -14,6 +14,8 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import tkinter
 import copy
+from statistics import mode
+from LoaderTest import *
 
 from torch.utils.data import DataLoader
 
@@ -35,8 +37,6 @@ print("Loaded training files of size, ", DL_training.X.shape)
 from torch import nn
 
 class LSTM(nn.Module):
-    #best results!
-    #batch size 64
     def __init__(self, num_features, hidden_units, seq_length):
         super(LSTM, self).__init__()
 
@@ -80,16 +80,16 @@ class LSTM(nn.Module):
 
         return SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE
 
-num_epochs = 120
-learning_rate = 1e-2 #pentru ADAM cu 1e-4 converge mai rpd
+num_epochs = 70
+learning_rate = 1e-4 #pentru ADAM cu 1e-4 converge mai rpd
 
 input_size = 34
 hidden_size = 512
 model = LSTM(input_size, hidden_units=hidden_size, seq_length=SEQUENCE_LENGTH).to("cuda:0")#.to(device)
 print(model)
 loss_function = nn.CrossEntropyLoss()
-#optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate, momentum=0.99)
+optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+#optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate, momentum=0.99)
 
 
 def test_model(test_loader, model, loss_function):
@@ -113,9 +113,9 @@ def test_model(test_loader, model, loss_function):
             output = softmax(output)
             maximum_values, predicted = torch.max(output.data, 1)
             
-            for i in range(len(predicted)):
-                if maximum_values[i] < 0.5:
-                    predicted[i] = -1
+            #for i in range(len(predicted)):
+            #    if maximum_values[i] < 0.5:
+            #        predicted[i] = -1
 
             for i, element in enumerate(predicted==y):
                 if element == True:
@@ -124,16 +124,51 @@ def test_model(test_loader, model, loss_function):
                 else:
                     nr_false += 1
 
+#################################################metric 2
+    all_values_predicted = []
+
+    with torch.no_grad():
+        for i in range(len(DL_test.X_by_video)):
+            loaded = DatasetTest(DL_test.X_by_video[i], DL_test.Y_by_video[i], device)
+            test_set = DataLoader(loaded, 1, shuffle=False)
+            predicted_vector = []
+            for X,y in iter(test_set):
+                output = model(X)
+                softmax = nn.Softmax(dim = 1)
+                output = softmax(output)
+                maximum_values, predicted = torch.max(output.data, 1)
+                predicted_vector.append(predicted[0].item())
+
+            all_values_predicted.append(predicted_vector)
+
+    values_for_every_video = []
+
+    for vector in all_values_predicted:
+        max_value = mode(vector)
+        values_for_every_video.append(max_value)
+
+    num_true_metric_3 = 0
+    
+    for i in range(len(values_for_every_video)):
+        if values_for_every_video[i] == DL_test.Y_by_video[i]:
+            num_true_metric_3 += 1
+
+    precision2 = num_true_metric_3 / (num_true_metric_3 + len(DL_test.Y_by_video) - num_true_metric_3)
+#####################################################
+    precision = nr_true / (nr_true + nr_false)
     print(f'    Metric 1, num true = {nr_true}, num_false = {nr_false}, precision = {nr_true / (nr_true + nr_false)}')
+    print(f'    Metric 2, num true = {num_true_metric_3}, num_false = {len(DL_test.Y_by_video) - num_true_metric_3}, precision = {precision2}')
     avg_loss = total_loss / num_batches
     print(f"    Test loss: {avg_loss}")
-    return avg_loss
+    return avg_loss , precision, precision2
 
 num_batches = len(train_loader)
 
 epochs = []
 train_loss = []
 validation_loss = []
+precision_validation = []
+precision2_validation = []
 minimum_testing_error = 99999
 minimum_epoch = None
 minimum_model = None
@@ -160,7 +195,7 @@ for epoch in range(num_epochs):
     avg_loss = total_loss / num_batches
     print(f"Train loss for epoch {epoch}: {avg_loss}, duration {time_end-time_begin} seconds")
     train_loss.append(avg_loss)
-    test_loss = test_model(test_loader, model, loss_function)
+    test_loss, precision, precision2 = test_model(test_loader, model, loss_function)
 
     if test_loss < minimum_testing_error:
         minimum_testing_error = test_loss
@@ -169,17 +204,23 @@ for epoch in range(num_epochs):
 
     torch.save(model.state_dict(), f"intermediary_results\\saved_checkpoint_{model.__class__.__name__}_{epoch}_epoch.pth")
 
-    if epoch % 10 == 0:
-        torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
+    #if epoch % 10 == 0:
+    #    torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
         
-
     validation_loss.append(test_loss)
+    precision_validation.append(precision)
+    precision2_validation.append(precision2)
     
-torch.save(model.state_dict(), "saved.pth")
+#torch.save(model.state_dict(), "saved.pth")
 print(f"Minimum epoch {minimum_epoch}, minimum loss {minimum_testing_error}")
-torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
+#torch.save(minimum_model, f"best_model_{model.__class__.__name__}.pth")
 
 
-plt.plot(epochs, train_loss)
-plt.plot(epochs, validation_loss)
-plt.show()
+with open(f'LSTM_shallow_23_batch_128_{SEQUENCE_LENGTH}.txt', 'w') as f:
+    for i in range(len(train_loss)):
+        f.write(f"{epochs[i]} {train_loss[i]} {validation_loss[i]} {precision_validation[i]} {precision2_validation[i]}\n")
+
+
+#plt.plot(epochs, train_loss)
+#plt.plot(epochs, validation_loss)
+#plt.show()

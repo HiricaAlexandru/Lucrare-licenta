@@ -13,8 +13,10 @@ class DatasetLoader(Dataset):
         self.device = device
         self.test = test
         self.test_files_dict = test_files_dict
+        self.X_by_video = []
+        self.Y_by_video = []
         self.load_dataset()
-
+        
         self.X = torch.tensor(self.X).float().to(device)
         self.Y = torch.tensor(self.Y).long().to(device)
 
@@ -57,6 +59,9 @@ class DatasetLoader(Dataset):
                     matrix_format_normalized = convert_to_2D_matrix(matrice_norm)
                     sequences, y_vector = get_all_sequences_from_2D_format(matrix_format_normalized, self.sequence_length, y_value) #trebuie cea normalizata
 
+                    self.X_by_video.append(sequences)
+                    self.Y_by_video.append(y_vector[0])
+                    
                     if self.X is None:
                         self.X = sequences
                         self.Y = y_vector
@@ -75,6 +80,9 @@ class DatasetLoader(Dataset):
                     matrix_format_normalized = convert_to_2D_matrix(matrice_norm)
                     sequences, y_vector = get_all_sequences_from_2D_format(matrix_format_normalized, self.sequence_length, y_value) #trebuie cea normalizata
                     
+                    self.X_by_video.append(sequences)
+                    self.Y_by_video.append(y_vector[0])
+
                     if self.X is None:
                         self.X = sequences
                         self.Y = y_vector

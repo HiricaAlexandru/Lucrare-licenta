@@ -46,7 +46,7 @@ def video_write(path_to_video_original, yolo_boxes, labels, confidence, name_of_
     vid_write_image = letterbox(frame, 960, stride=64, auto=True)[0]
     resize_height, resize_width = vid_write_image.shape[:2]
 
-    capWriter = cv2.VideoWriter(f"demo_videos\\{name_of_output}.mp4",
+    capWriter = cv2.VideoWriter(f"{name_of_output}.mp4",
                             cv2.VideoWriter_fourcc(*'mp4v'), fps,
                             (resize_width, resize_height))
     number_frame = 0
@@ -80,29 +80,29 @@ def video_write(path_to_video_original, yolo_boxes, labels, confidence, name_of_
 
 def decode_output(number_label):
         if number_label == 0:
-            return "backhand", "backhand"
+            return "backhand", "backhand", 'forehand_flat', "forehand"
         if number_label == 1:
-            return 'backhand_slice', "backhand"
+            return 'backhand_slice', "backhand", 'forehand_slice', "forehand"
         if number_label == 2:
-            return "backhand_volley", "backhand"
+            return "backhand_volley", "backhand", 'forehand_volley', "forehand"
         if number_label == 3:
-            return 'backhand2hands', "backhand"
+            return 'backhand2hands', "backhand", 'forehand2hands', 'forehand'
         if number_label == 4:
-            return 'flat_service', "service"
+            return 'flat_service', "service", 'flat_service', "service"
         if number_label == 5:
-            return 'forehand_flat', "forehand"
+            return 'forehand_flat', "forehand", "backhand", "backhand"
         if number_label == 6:
-            return 'forehand_openstands', "forehand"
+            return 'forehand_openstands', "forehand", 'backhand2hands', "backhand"
         if number_label == 7:
-            return 'forehand_slice', "forehand"
+            return 'forehand_slice', "forehand", 'backhand_slice', "backhand"
         if number_label == 8:
-            return 'forehand_volley', "forehand"
+            return 'forehand_volley', "forehand", "backhand_volley", "backhand"
         if number_label == 9:
-            return 'kick_service', "service"
+            return 'kick_service', "service", 'kick_service', "service"
         if number_label == 10:
-            return 'slice_service', "service"
+            return 'slice_service', "service", 'slice_service', "service"
         if number_label == 11:
-            return 'smash', 'smash'
+            return 'smash', 'smash', 'smash', 'smash'
         if number_label == -1:
-            return "no_move", 'no_move'
+            return "no_move", 'no_move', "no_move", 'no_move'
         return None

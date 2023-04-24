@@ -85,7 +85,7 @@ def make_predictions_video(video_original_path, path_video_to_save):
     confidence = []
 
     STATUS_LABEL['text'] = f"Predicting the action from {video_original_path}"
-    test_loader = DataLoader(all_detections_sequence, 1, shuffle=False)
+    test_loader = DataLoader(all_detections_sequence, 512, shuffle=False)
     number = 0
     with torch.no_grad():
         for X in test_loader:
@@ -97,9 +97,9 @@ def make_predictions_video(video_original_path, path_video_to_save):
             for i in range(len(predicted)):
                 if maximum_values[i] < 0.7:
                     predicted[i] = -1
-            
-            output_labels.append(predicted[i].item())
-            confidence.append(maximum_values[i].item())
+
+                output_labels.append(predicted[i].item())
+                confidence.append(maximum_values[i].item())
 
 
     output_names = [None for i in range(len(output_labels))]
@@ -274,8 +274,6 @@ def GUI_run():
 
 init()
 GUI_run()
-#make_predictions(VIDEO_PATH)
-
 
 cursor.close()
 cnxn.close()

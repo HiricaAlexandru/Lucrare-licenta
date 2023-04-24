@@ -7,19 +7,19 @@ sys.path.append("F:\Licenta\Lucrare-licenta\yolov7\\")
 import torch
 import YoloModel as YM
 from utils_detection import *
-import time
 import pandas as pd
 from DatasetLoader import *
 from LoaderTest import *
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-import tkinter
-import copy
 from torch.utils.data import DataLoader
 from torch import nn
+from sklearn.metrics import confusion_matrix
 import models_LSTM
 from statistics import mode
+import seaborn as sns
+from Vizualize import decode_output
 
 def test_model(test_loader, model, loss_function):
     num_batches = len(test_loader)
@@ -38,8 +38,8 @@ def test_model(test_loader, model, loss_function):
 
 #loading the data necessary for model creation
 BATCH_SIZE = 512
-SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE = models_LSTM.LSTM_shallow_23_sequence.return_train_data()
-MODEL_PATH = "F:\Licenta\Lucrare-licenta\models\LSTM_shallow_23_sequence\saved_checkpoint_LSTM_27_epoch_best.pth"
+SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE = models_LSTM.LSTM.return_train_data()
+MODEL_PATH = "F:\\Licenta\\Lucrare-licenta\\results\saved_checkpoint_LSTM_60_epoch.pth"
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 test_file_names = DatasetLoader.load_test_from_file("testing_files.txt") 
@@ -50,11 +50,14 @@ print(len(DL_test.Y_by_video), len(DL_test.X_by_video))
 test_loader = DataLoader(DL_test, BATCH_SIZE, shuffle=False)
 
 
-model = models_LSTM.LSTM_shallow_23_sequence(INPUT_SIZE, hidden_units=HIDDEN_SIZE, seq_length=SEQUENCE_LENGTH).to(device)
+model = models_LSTM.LSTM(INPUT_SIZE, hidden_units=HIDDEN_SIZE, seq_length=SEQUENCE_LENGTH).to(device)
 model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()
 
 specifics = [0 for i in range(12)] #variable that holds correct guessed value
+
+X_total = []
+Y_total = []
 
 with torch.no_grad():
         nr_true = 0
@@ -72,7 +75,9 @@ with torch.no_grad():
             #    if maximum_values[i] < 0.5:
             #        predicted[i] = -1
 
-           
+            X_total.extend(predicted.cpu().numpy().tolist())
+            Y_total.extend(y.cpu().numpy().tolist())
+
             for i, element in enumerate(predicted==y):
                 if element == True:
                     nr_true += 1
@@ -132,6 +137,20 @@ num_true_metric_3 = 0
 for i in range(len(values_for_every_video)):
     if values_for_every_video[i] == DL_test.Y_by_video[i]:
         num_true_metric_3 += 1
+
+classes_name = []
+for i in range(12):
+    classes_name.append(decode_output(i)[0])
+
+conf_mat = confusion_matrix(Y_total, X_total)
+norm_conf_mat = conf_mat.astype('float') / conf_mat.sum(axis=1)[:, np.newaxis]
+#norm_conf_mat = conf_mat
+sns.heatmap(norm_conf_mat, annot=True, cmap='Blues', xticklabels = classes_name, yticklabels = classes_name)
+
+plt.title("Confusion Matrix")
+plt.xlabel('Predicted Labels')
+plt.autoscale(enable=True) 
+plt.show()
 
 loss_function = nn.CrossEntropyLoss()
 print("Eroare entropie = ", test_model(test_loader, model, loss_function))

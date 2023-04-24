@@ -15,6 +15,11 @@ import matplotlib.pyplot as plt
 from zipfile import *
 import os
 import pandas as pd
+import hashlib
+from datetime import datetime
+import tkinter as tk
+from tkinter import filedialog
+from threading import Thread
 
 def make_video_labels():
     classes_name = dict()
@@ -33,6 +38,8 @@ model, model_YOLO = None, None
 CLASSES_NAME = None
 SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE = None, None, None
 device = None
+STATUS_LABEL, SELECT_BUTTON = None, None
+
 VIDEO_PATH = "C:\\Users\\AlexH\\Downloads\\tennis_match_crop.mp4"
 #VIDEO_PATH = "F:\Licenta\\test_videos\halep_cut.mp4"
 #VIDEO_PATH = "F:\Licenta\\test_videos\Djokovic.mp4"
@@ -42,7 +49,7 @@ NAME_OF_OUTPUT = ".tmp/video_labeled"
 REVERSED = False
 #VIDEO_PATH = "F:\Licenta\VIDEO_RGB\\backhand_slice\\p20_bslice_s2.avi"
 #VIDEO_PATH = "F:\\Licenta\\VIDEO_RGB\\backhand_volley\\p1_bvolley_s2.avi"
-
+#VIDEO_PATH = "F:\Licenta\Lucrare-licenta\p20_bslice_s2.avi"
 
 def create_folders():
     if not os.path.isdir("saved_videos"):
@@ -62,6 +69,9 @@ def create_database_connection():
     return cnxn, cursor
 
 def make_predictions_video(video_original_path, path_video_to_save):
+    global STATUS_LABEL
+
+    STATUS_LABEL['text'] = f"Finding the person in the video {video_original_path}"
     all_detection, yolo_boxes = model_YOLO.read_from_video(video_original_path)
     print("Read video file")
 
@@ -74,6 +84,7 @@ def make_predictions_video(video_original_path, path_video_to_save):
     output_labels = []
     confidence = []
 
+    STATUS_LABEL['text'] = f"Predicting the action from {video_original_path}"
     test_loader = DataLoader(all_detections_sequence, 1, shuffle=False)
     number = 0
     with torch.no_grad():
@@ -98,14 +109,15 @@ def make_predictions_video(video_original_path, path_video_to_save):
             output_names[i] = decode_output(output_labels[i])[2]
         else:
             output_names[i] = decode_output(output_labels[i])[0]
-    
+
+    STATUS_LABEL['text'] = "Writing resulting video file"
     video_write(video_original_path, yolo_boxes, output_names, confidence, path_video_to_save, SEQUENCE_LENGTH)
     
     return output_names
 
 def search_hash_in_database(hash):
     global cursor, cnxn
-    cursor.execute(f"SELECT * FROM Video_Entry WHERE HASH = '{hash}';")
+    cursor.execute(f"SELECT * FROM EntryVideo WHERE HASH = '{hash}';")
 
     rows = cursor.fetchall()
     
@@ -117,9 +129,14 @@ def search_hash_in_database(hash):
     else:
         return False
 
+def delete_entry_database(primary_key):
+    global cursor, cnxn
+    cursor.execute(f"DELETE FROM EntryVideo WHERE HASH ='{primary_key}';")
+    cnxn.commit()
+
 def insert_value(hash, video_path):
     global cursor, cnxn
-    cursor.execute(f"INSERT INTO Video_Entry VALUES('{hash}', '{video_path}');")
+    cursor.execute(f"INSERT INTO EntryVideo VALUES('{hash}', '{video_path}');")
     cnxn.commit()
 
 def fill_outputs_value(outputs):
@@ -151,6 +168,13 @@ def make_csv_and_graph(name_of_output):
     os.remove(".tmp/Shot_occurance.csv")
     os.remove(".tmp/video_labeled.mp4")
 
+def get_hash_of_file(file_path):
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
 def init():
     global cnxn, cursor, model, model_YOLO, device, SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE, CLASSES_NAME
 
@@ -174,11 +198,84 @@ def init():
 
     print("Loaded the YOLO model")
 
+def create_output_name_of_video(video_path):
+    time_now = datetime.now()
+    date_time = time_now.strftime("%m-%d-%Y")
+    name = utils_detection.get_video_name(video_path)
+
+    return f"{name}-{date_time}"
+
+def make_predictions(video_path):
+    global STATUS_LABEL
+    hash_of_file = get_hash_of_file(video_path)
+    hash_file = search_hash_in_database(hash_of_file)
+    name_of_output = NAME_OF_OUTPUT
+    print(video_path)
+    if hash_file != False :
+        if not(os.path.exists(hash_file)):
+            #if the file path is no longer existing we need to delete from the database this entry
+            delete_entry_database(hash_of_file)
+        else:
+            print(f"It is found at {hash_file}")
+            STATUS_LABEL['text'] = f"The file if found at {hash_file}"
+            SELECT_BUTTON["state"] = "normal"
+            return False
+
+
+    outputs = make_predictions_video(video_path, name_of_output)
+    fill_outputs_value(outputs)
+    name_of_output_video = create_output_name_of_video(video_path)
+
+    STATUS_LABEL['text'] = "Creating the zip file"
+    make_csv_and_graph(name_of_output_video)
+    path_to_video = os.path.abspath(f"saved_videos/{name_of_output_video}.zip")
+    insert_value(hash_of_file, path_to_video)
+    STATUS_LABEL['text'] = f"Finished, zip file at location {path_to_video}"
+    SELECT_BUTTON["state"] = "normal"
+
+    return True
+
+def browse_file_run_inference():
+    file_types = [
+        ("Avi files", "*.avi"),
+        ("Mp4 files", "*.mp4")
+    ]
+
+    filename = filedialog.askopenfilename(initialdir = "/",
+                                          title = "Select a File",
+                                          filetypes = file_types)
+    print(SELECT_BUTTON)
+    SELECT_BUTTON["state"] = "disabled"
+    filename = filename.replace('/', '\\')
+    thread = Thread(target=make_predictions, args=[filename])
+    thread.start()
+    #make_predictions(filename)
+
+
+def GUI_run():
+    global SELECT_BUTTON, STATUS_LABEL
+    
+    WINDOW_WIDTH = 800
+    WINDOW_HEIGHT = 600
+    root = tk.Tk()
+    root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")  # Set the size of the window
+    # Create a label widget to display the message
+
+    frm = tk.Frame(root, padx=10, pady=10)
+    
+    frm.grid()
+    tk.Label(frm, text="Select file to analyze", pady = 10).grid(column=0, row=0)
+    SELECT_BUTTON = tk.Button(frm, text="Select file", command=browse_file_run_inference, pady = 10)
+    SELECT_BUTTON.grid(column=0, row=1)
+    STATUS_LABEL = tk.Label(frm, text="", pady = 10)
+    STATUS_LABEL.grid(column=0, row=2)
+    frm.place(relx=0.5, rely=0.5, anchor="center")
+    root.mainloop()
 
 init()
-outputs = make_predictions_video(VIDEO_PATH, NAME_OF_OUTPUT)
-fill_outputs_value(outputs)
-make_csv_and_graph('hiricesc')
+GUI_run()
+#make_predictions(VIDEO_PATH)
+
+
 cursor.close()
 cnxn.close()
-

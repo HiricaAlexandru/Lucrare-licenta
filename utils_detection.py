@@ -3,6 +3,12 @@ import numpy as np
 import sys
 import pandas as pd
 
+def get_video_name(path):
+    path_splitted = path.split('\\')
+    video_name_with_extension = path_splitted[len(path_splitted) - 1]
+    video_name = video_name_with_extension.split(".")[0]
+    return video_name
+
 def get_detection_box_yolo(detection):
 
     detection_copy = detection.copy()

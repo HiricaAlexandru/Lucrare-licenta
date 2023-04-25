@@ -315,13 +315,13 @@ class LSTM_shallow_20_sequence(nn.Module):
 
         return SEQUENCE_LENGTH, INPUT_SIZE, HIDDEN_SIZE
     
-class LSTM_shallow_23_sequence(nn.Module):
+class LSTM(nn.Module):
     #batch size 128
     #optimizer = torch.optim.Adam(model.parameters(), lr = e1-4)
     #cliiping 0.05
     #best!
     def __init__(self, num_features, hidden_units, seq_length):
-        super(LSTM_shallow_23_sequence, self).__init__()
+        super(LSTM, self).__init__()
 
         self.num_features = num_features
         self.num_classes = 12

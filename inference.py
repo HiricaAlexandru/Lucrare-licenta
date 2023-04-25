@@ -20,6 +20,7 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import filedialog
 from threading import Thread
+from PIL import Image, ImageTk
 
 def make_video_labels():
     classes_name = dict()
@@ -163,7 +164,7 @@ def make_csv_and_graph(name_of_output):
         myzip.write('.tmp/Shot_occurance.png', 'Shot_occurance.png')
         myzip.write('.tmp/Shot_occurance.csv', 'Shot_occurance.csv')
         myzip.write(".tmp/video_labeled.mp4", 'video_labeled.mp4')
-    
+
     os.remove(".tmp/Shot_occurance.png")
     os.remove(".tmp/Shot_occurance.csv")
     os.remove(".tmp/video_labeled.mp4")
@@ -232,6 +233,7 @@ def make_predictions(video_path):
     insert_value(hash_of_file, path_to_video)
     STATUS_LABEL['text'] = f"Finished, zip file at location {path_to_video}"
     SELECT_BUTTON["state"] = "normal"
+    os.startfile(path_to_video)
 
     return True
 
@@ -240,16 +242,16 @@ def browse_file_run_inference():
         ("Avi files", "*.avi"),
         ("Mp4 files", "*.mp4")
     ]
-
+    
     filename = filedialog.askopenfilename(initialdir = "/",
                                           title = "Select a File",
                                           filetypes = file_types)
-    print(SELECT_BUTTON)
-    SELECT_BUTTON["state"] = "disabled"
-    filename = filename.replace('/', '\\')
-    thread = Thread(target=make_predictions, args=[filename])
-    thread.start()
-    #make_predictions(filename)
+    if len(filename) > 0:
+        SELECT_BUTTON["state"] = "disabled"
+        STATUS_LABEL['text'] = ""
+        filename = filename.replace('/', '\\')
+        thread = Thread(target=make_predictions, args=[filename])
+        thread.start()
 
 
 def GUI_run():
@@ -260,15 +262,25 @@ def GUI_run():
     root = tk.Tk()
     root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")  # Set the size of the window
     # Create a label widget to display the message
+    root.title("Tennis match prediction")
+    image1 = Image.open("logo_image\logo-color_crop.png")
+    
+    photo_image_tkinter = ImageTk.PhotoImage(image1)
 
     frm = tk.Frame(root, padx=10, pady=10)
     
+    #setting the colors
+    frm.configure(background="#ffa458")
+    root.configure(background='#ffa458')
+
     frm.grid()
-    tk.Label(frm, text="Select file to analyze", pady = 10).grid(column=0, row=0)
-    SELECT_BUTTON = tk.Button(frm, text="Select file", command=browse_file_run_inference, pady = 10)
-    SELECT_BUTTON.grid(column=0, row=1)
-    STATUS_LABEL = tk.Label(frm, text="", pady = 10)
-    STATUS_LABEL.grid(column=0, row=2)
+    label_image = tk.Label(frm, image = photo_image_tkinter, background="#ffa458")
+    label_image.grid(column = 0, row = 0)
+    tk.Label(frm, text="Select file to analyze", pady = 10, background="#ffa458", font = ("Helvetica", 24, "bold"), fg='white').grid(column=0, row=1)
+    SELECT_BUTTON = tk.Button(frm, text="Select file", command=browse_file_run_inference, pady = 10, width=30, font = ("Helvetica", 15, "normal"))
+    SELECT_BUTTON.grid(column=0, row=2)
+    STATUS_LABEL = tk.Label(frm, text="", pady = 10, background="#ffa458", font = ("Helvetica", 12, "normal"), fg = 'white')
+    STATUS_LABEL.grid(column=0, row=3)
     frm.place(relx=0.5, rely=0.5, anchor="center")
     root.mainloop()
 

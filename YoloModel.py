@@ -106,8 +106,8 @@ class YoloModel:
                 elif self.inference == True:
                     #if no box was detected then we will return the invalid values being full -1
                     if yolo_boxes is None:
-                        yolo_boxes = np.array([-1, -1, -1, -1, -1])
-                        all_detections = np.array([[0 for i in range(34)]])
+                        yolo_boxes = np.array([[-1, -1, -1, -1, -1]])
+                        all_detections = np.array([[[0, 0] for i in range(17)]])
                     else:
                         yolo_boxes = np.append(yolo_boxes, np.array([[-1, -1, -1, -1, -1]]), axis = 0)
                         all_detections = np.append(all_detections, np.array([[[0, 0] for i in range(17)]]), axis = 0)

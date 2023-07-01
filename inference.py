@@ -21,6 +21,7 @@ import tkinter as tk
 from tkinter import filedialog
 from threading import Thread
 from PIL import Image, ImageTk
+import platform
 
 def make_video_labels():
     classes_name = dict()
@@ -61,7 +62,7 @@ def create_folders():
 
 def create_database_connection():
     cnxn_str = ("Driver={SQL Server};"
-                "Server=DESKTOP-7IPHS13\SQLEXPRESS;"
+                f"Server={platform.node()}\SQLEXPRESS;"
                 "Database=VideoEntry;"
                 "Trusted_Connection=yes;")
     cnxn = pyodbc.connect(cnxn_str)
@@ -124,7 +125,6 @@ def search_hash_in_database(hash):
     
     if len(rows) > 0:
         for row in rows:
-            #print(row, type(row), row.)
             row_to_list = [elem.strip() for elem in row]
             return row_to_list[1]
     else:
@@ -207,14 +207,13 @@ def create_output_name_of_video(video_path):
     return f"{name}-{date_time}"
 
 def make_predictions(video_path):
-    global STATUS_LABEL
     hash_of_file = get_hash_of_file(video_path)
     hash_file = search_hash_in_database(hash_of_file)
     name_of_output = NAME_OF_OUTPUT
     print(video_path)
     if hash_file != False :
         if not(os.path.exists(hash_file)):
-            #if the file path is no longer existing we need to delete from the database this entry
+            #if the file path is no longer existing we need to delete this from the database entry
             delete_entry_database(hash_of_file)
         else:
             print(f"It is found at {hash_file}")
